@@ -1,0 +1,122 @@
+#include <Adafruit_GFX.h>    // Core graphics library
+#include <Adafruit_TFTLCD.h> // Hardware-specific library
+
+// Define the pin connections for the TFT LCD
+#define LCD_CS   A3 // Chip Select
+#define LCD_CD   A2 // Command/Data
+#define LCD_WR   A1 // LCD Write
+#define LCD_RD   A0 // LCD Read
+#define LCD_RESET A4 // Reset
+
+// Define some colors
+#define BLACK   0x0000
+#define BLUE    0x001F
+#define RED     0xF800
+#define WHITE   0xFFFF
+#define GREEN   0x07E0
+#define ORANGE  0xFD20
+#define SKYBLUE 0x87CEEB // Sky blue color
+
+Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println(F("TFT LCD Independence Day Test"));
+
+  tft.reset();
+  
+  uint16_t identifier = tft.readID();
+  Serial.print("Detected LCD driver ID: ");
+  Serial.println(identifier, HEX);
+
+  // Adjust for your specific LCD driver if needed
+  if (identifier == 0x9325) {
+    Serial.println(F("Found ILI9325 LCD driver"));
+  } else if (identifier == 0x9328) {
+    Serial.println(F("Found ILI9328 LCD driver"));
+  } else if (identifier == 0x7575) {
+    Serial.println(F("Found HX8347G LCD driver"));
+  } else if (identifier == 0x9341) {
+    Serial.println(F("Found ILI9341 LCD driver"));
+  } else if (identifier == 0x8357) {
+    Serial.println(F("Found HX8357D LCD driver"));
+  } else {
+    Serial.print(F("Unknown LCD driver chip: "));
+    Serial.println(identifier, HEX);
+    return;
+  }
+
+  tft.begin(identifier);
+  tft.setRotation(1); // Set the display to landscape mode
+
+  // Show message for 4 seconds
+  displayMessage();
+  delay(4000); // Delay for 4 seconds
+
+  // Clear the screen and display the flag
+  tft.fillScreen(BLACK);
+  displayFlag();
+  delay(2000); // Display flag for 2 seconds
+
+  // Display the rotating Ashoka Chakra
+  rotateAshokaChakra();
+}
+
+void loop() {
+  // You can add additional functionality here if needed
+}
+
+void displayMessage() {
+  tft.fillScreen(SKYBLUE); // Set the background to sky blue
+  tft.setTextSize(2);
+  tft.setTextColor(BLACK); // Set the text color to black
+  tft.setCursor(10, 10); // Adjust cursor position for landscape mode
+  tft.println("Happy Independence Day");
+
+  tft.setTextSize(1);
+  tft.setCursor(10, 240); // Adjust cursor position for footer
+  tft.println("Vadeendra Karanam");
+}
+
+void displayFlag() {
+  int w = tft.width();
+  int h = tft.height();
+  int stripeHeight = h / 3;
+
+  // Draw the flag stripes
+  tft.fillRect(0, 0, w, stripeHeight, ORANGE);   // Top stripe
+  tft.fillRect(0, stripeHeight, w, stripeHeight, WHITE); // Middle stripe
+  tft.fillRect(0, stripeHeight * 2, w, stripeHeight, GREEN); // Bottom stripe
+}
+
+void rotateAshokaChakra() {
+  int w = tft.width();
+  int h = tft.height();
+  int stripeHeight = h / 3;
+  int circleRadius = stripeHeight / 2;
+  int centerX = w / 2;
+  int centerY = stripeHeight + (stripeHeight / 2);
+  int rotationSpeed = 15; // Degrees to rotate per frame
+
+  for (int angle = 0; angle < 360; angle += rotationSpeed) {
+    // Draw the flag again to ensure it remains unaffected
+    displayFlag();
+
+    // Draw the rotating Ashoka Chakra
+    drawAshokaChakra(centerX, centerY, circleRadius, angle);
+    delay(50); // Delay for a smooth rotation effect
+  }
+}
+
+void drawAshokaChakra(int x, int y, int radius, int angleOffset) {
+  // Draw the Ashoka Chakra outer circle
+  tft.drawCircle(x, y, radius, BLUE);
+
+  // Draw the 24 spokes of the Ashoka Chakra
+  for (int i = 0; i < 24; i++) {
+    float angle = (i * 15 + angleOffset) * (PI / 180); // Rotate by angleOffset
+    int endX = x + radius * cos(angle);
+    int endY = y - radius * sin(angle);
+    tft.drawLine(x, y, endX, endY, BLUE);
+  }
+}
